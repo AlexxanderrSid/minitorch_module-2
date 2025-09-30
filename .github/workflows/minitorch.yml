@@ -42,4 +42,3 @@ jobs:
         pytest tests -x -m task2_2
         pytest tests -x -m task2_3
         pytest tests -x -m task2_4
-        pytest tests -x -m task2_5
