@@ -22,7 +22,15 @@ def central_difference(f: Any, *vals: Any, arg: int = 0, epsilon: float = 1e-6) 
     Returns:
         An approximation of $f'_i(x_0, \ldots, x_{n-1})$
     """
-    raise NotImplementedError("Need to include this file from past assignment.")
+    values = list(vals)
+
+    values_plus = values.copy()
+    values_plus[arg] += epsilon
+
+    values_minus = values.copy() 
+    values_minus[arg] -= epsilon
+
+    return (f(*values_plus) - f(*values_minus)) / (2 * epsilon)
 
 
 variable_count = 1
@@ -60,7 +68,20 @@ def topological_sort(variable: Variable) -> Iterable[Variable]:
     Returns:
         Non-constant Variables in topological order starting from the right.
     """
-    raise NotImplementedError("Need to include this file from past assignment.")
+    # TODO: Implement for Task 1.4.
+    def dfs(v):
+        if v.is_constant() or v.unique_id in visited: 
+            return
+        visited.add(v.unique_id)
+        for child in v.parents:
+            dfs(child)
+        result.append(v)
+    
+    visited = set()
+    result = []
+    dfs(variable)
+    result.reverse()
+    return result
 
 
 def backpropagate(variable: Variable, deriv: Any) -> None:
@@ -74,7 +95,17 @@ def backpropagate(variable: Variable, deriv: Any) -> None:
 
     No return. Should write to its results to the derivative values of each leaf through `accumulate_derivative`.
     """
-    raise NotImplementedError("Need to include this file from past assignment.")
+    # TODO: Implement for Task 1.4.
+    topo = topological_sort(variable)
+    grads = {}
+    grads[variable.unique_id] = deriv
+    for v in topo:
+        d_out = grads.get(v.unique_id, 0.0)
+        if v.is_leaf():
+            v.accumulate_derivative(d_out)
+            continue
+        for parent, g in v.chain_rule(d_out):
+            grads[parent.unique_id] = grads.get(parent.unique_id, 0.0) + g
 
 
 @dataclass

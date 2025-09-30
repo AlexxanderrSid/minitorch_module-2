@@ -269,7 +269,20 @@ def tensor_map(fn: Callable[[float], float]) -> Any:
         in_strides: Strides,
     ) -> None:
         # TODO: Implement for Task 2.3.
-        raise NotImplementedError("Need to implement for Task 2.3")
+        size = 1
+        for x in out_shape:
+            size *= x
+
+        in_index = np.zeros(len(in_shape), dtype=np.int32)
+        out_index = np.zeros(len(out_shape), dtype=np.int32)
+        for ordinal in range(size):
+            to_index(ordinal, out_shape, out_index)
+            broadcast_index(out_index, out_shape, in_shape, in_index)
+
+            in_pos = index_to_position(in_index, in_strides)
+            out_pos = index_to_position(out_index, out_strides)
+
+            out[out_pos] = fn(in_storage[in_pos])
 
     return _map
 
@@ -319,7 +332,22 @@ def tensor_zip(fn: Callable[[float, float], float]) -> Any:
         b_strides: Strides,
     ) -> None:
         # TODO: Implement for Task 2.3.
-        raise NotImplementedError("Need to implement for Task 2.3")
+        size = 1
+        for x in out_shape:
+            size *= x
+
+        a_index = np.zeros(len(a_shape), dtype=np.int32)
+        b_index = np.zeros(len(b_shape), dtype=np.int32)
+        out_index = np.zeros(len(out_shape), dtype=np.int32)
+
+        for ordinal in range(size):
+            to_index(ordinal, out_shape, out_index)
+            broadcast_index(out_index, out_shape, a_shape, a_index)
+            broadcast_index(out_index, out_shape, b_shape, b_index)
+            out_pos = index_to_position(out_index, out_strides)
+            a_pos = index_to_position(a_index, a_strides)
+            b_pos = index_to_position(b_index, b_strides)
+            out[out_pos] = fn(a_storage[a_pos], b_storage[b_pos])
 
     return _zip
 
@@ -355,7 +383,21 @@ def tensor_reduce(fn: Callable[[float, float], float]) -> Any:
         reduce_dim: int,
     ) -> None:
         # TODO: Implement for Task 2.3.
-        raise NotImplementedError("Need to implement for Task 2.3")
+        out_index = np.zeros_like(out_shape, dtype=int)
+        in_index = np.zeros_like(a_shape, dtype=int)
+
+        for o in range(len(out)):
+            to_index(o, out_shape, out_index)
+            for k in range(len(a_shape)):
+                if k != reduce_dim:
+                    in_index[k] = out_index[k]
+            result = 0.0
+            for idx in range(a_shape[reduce_dim]):
+                in_index[reduce_dim] = idx
+                in_pos = index_to_position(in_index, a_strides)
+                result = a_storage[in_pos] if idx == 0 else fn(result, a_storage[in_pos])
+            out_pos = index_to_position(out_index, out_strides)
+            out[out_pos] = result
 
     return _reduce
 
